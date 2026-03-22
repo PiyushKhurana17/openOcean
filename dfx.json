@@ -1,0 +1,31 @@
+{
+  "canisters": {
+    "openOcean_backend": {
+      "main": "src/openOcean_backend/main.mo",
+      "type": "motoko"
+    },
+    "nft": {
+      "main": "src/NFT/nft.mo",
+      "type": "motoko"
+    },
+    "openOcean_frontend": {
+      "dependencies": [
+        "openOcean_backend",
+        "nft"
+      ],
+      "source": [
+        "src/openOcean_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "openOcean_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
