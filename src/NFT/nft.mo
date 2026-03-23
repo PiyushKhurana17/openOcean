@@ -3,9 +3,9 @@ import Principal "mo:base/Principal";
 
 persistent actor class NFT(name : Text, owner : Principal, content : [Nat8]) = this {
     Debug.print("It works!");
-    let itemName = name;
-    let nftOwner = owner;
-    let imageBytes = content;
+    private let itemName = name;
+    private var nftOwner = owner;
+    private let imageBytes = content;
 
     public query func getName() : async Text {
         itemName;
@@ -21,6 +21,16 @@ persistent actor class NFT(name : Text, owner : Principal, content : [Nat8]) = t
 
     public query func getCanisterId() : async Principal {
         Principal.fromActor(this);
+    };
+
+    public shared (msg) func transfer(newOwner : Principal) : async Text {
+        let owner : Principal = msg.caller;
+        if (Principal.equal(owner, nftOwner)) {
+            nftOwner := newOwner;
+            return "Success!";
+        } else {
+            return "You are not the owner of this NFT";
+        };
     };
 
 };

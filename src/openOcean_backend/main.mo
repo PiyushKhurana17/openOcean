@@ -6,9 +6,24 @@ import List "mo:base/List";
 import Iter "mo:base/Iter";
 
 persistent actor OpenD {
+
+    private type Listing = {
+        itemPrice : Nat;
+        itemOwner : Principal;
+    };
+
     // Implicitly stable arrays - survive canister upgrades
     var nftEntries : [(Principal, NFTActorClass.NFT)] = [];
     var ownerEntries : [(Principal, List.List<Principal>)] = [];
+    var nftListings : [(Principal, Listing)] = [];
+
+    // Hashmap for listing - rebuilding from stable arrays on init
+    transient var mapOfListings = HashMap.fromIter<Principal, Listing>(
+        nftListings.vals(),
+        nftListings.size(),
+        Principal.equal,
+        Principal.hash,
+    );
 
     // Transient HashMaps - rebuilt from stable arrays on init
     transient var mapOfNFTs = HashMap.fromIter<Principal, NFTActorClass.NFT>(
@@ -28,6 +43,7 @@ persistent actor OpenD {
     system func preupgrade() {
         nftEntries := Iter.toArray(mapOfNFTs.entries());
         ownerEntries := Iter.toArray(mapOfOwners.entries());
+        nftListings := Iter.toArray(mapOfListings.entries());
     };
 
     public shared (msg) func mint(imgData : [Nat8], name : Text) : async Principal {
@@ -64,5 +80,34 @@ persistent actor OpenD {
             };
         };
         return List.toArray(ownedNFTList);
+    };
+
+    public shared (msg) func listItem(nftId : Principal, price : Nat) : async Text {
+        var item : NFTActorClass.NFT = switch (mapOfNFTs.get(nftId)) {
+            case (null) {
+                return "NFT not found";
+            };
+            case (?result) {
+                result;
+            };
+        };
+
+        let originalOwner = await item.getOwner();
+        let owner : Principal = msg.caller;
+        if (Principal.equal(originalOwner, owner)) {
+            let newListing : Listing = { itemPrice = price; itemOwner = owner };
+            mapOfListings.put(nftId, newListing);
+            return "Success!";
+        } else {
+            return "You are not the owner of this NFT";
+        };
+    };
+
+    public query func getAllListings() : async [(Principal, Listing)] {
+        return Iter.toArray(mapOfListings.entries());
+    };
+
+    public query func getCanisterId() : async Principal {
+        Principal.fromActor(OpenD);
     };
 };
