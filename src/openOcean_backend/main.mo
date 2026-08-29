@@ -103,11 +103,67 @@ persistent actor OpenD {
         };
     };
 
-    public query func getAllListings() : async [(Principal, Listing)] {
-        return Iter.toArray(mapOfListings.entries());
+    public query func getAllListings() : async [Principal] {
+        return Iter.toArray(mapOfListings.keys());
     };
 
     public query func getCanisterId() : async Principal {
         Principal.fromActor(OpenD);
+    };
+
+    public query func getOriginalOwner(nftId : Principal) : async ?Principal {
+        switch (mapOfListings.get(nftId)) {
+            case (null) { return null };
+            case (?listing) { return ?listing.itemOwner };
+        };
+    };
+
+    public query func getListedNFTPrice(nftId : Principal) : async Nat {
+        let item : Listing = switch (mapOfListings.get(nftId)) {
+            case (null) {
+                return 0;
+            };
+            case (?result) {
+                result;
+            };
+        };
+        return item.itemPrice;
+    };
+
+    public shared (msg) func completePurchase(nftId : Principal, ownerIDprev : Principal, newOwner : Principal) {
+        let item : NFTActorClass.NFT = switch (mapOfNFTs.get(nftId)) {
+            case (null) {
+                return "NFT not found";
+            };
+            case (?result) {
+                result;
+            };
+        };
+
+        let transferResult = await item.transfer(newOwner);
+        if (transferResult == "Success!") {
+            mapOfListings.remove(nftId);
+            var ownedNFTs : List.List<Principal> = switch (mapOfOwners.get(ownerIDprev)) {
+                case (null) {
+                    List.nil<Principal>();
+                };
+                case (?result) {
+                    result;
+                };
+            };
+
+            ownedNFTs := List.filter(
+                ownedNFTs,
+                func(nftId : Principal) : Bool {
+                    return not (Principal.equal(nftId, nftId));
+                },
+            );
+
+            addToOwnership(newOwner, nftId);
+
+            return "Success!";
+        } else {
+            return transferResult;
+        };
     };
 };

@@ -4,14 +4,9 @@
       "main": "src/openOcean_backend/main.mo",
       "type": "motoko"
     },
-    "nft": {
-      "main": "src/NFT/nft.mo",
-      "type": "motoko"
-    },
     "openOcean_frontend": {
       "dependencies": [
-        "openOcean_backend",
-        "nft"
+        "openOcean_backend"
       ],
       "source": [
         "src/openOcean_frontend/dist"

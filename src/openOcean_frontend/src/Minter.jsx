@@ -5,7 +5,7 @@ import { Principal } from "@dfinity/principal";
 import Item from "./Item";
 
 function Minter() {
-  const [nftPrincipal, setNftPrincipal] = React.useState("");
+  const [nftPrincipal, setNftPrincipal] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const { register, handleSubmit } = useForm();
 
@@ -18,14 +18,14 @@ function Minter() {
 
       const newNFTid = await openOcean_backend.mint(imageBytes, name);
       console.log(newNFTid.toText());
-      setNftPrincipal(newNFTid.toText());
+      setNftPrincipal(newNFTid);
     } catch (err) {
       console.error("Minting failed:", err);
     }
     setLoading(false);
   }
 
-  if (nftPrincipal == "") {
+  if (!nftPrincipal) {
     return (
       <div className="minter-container">
         <div hidden={!loading} className="lds-ellipsis">
